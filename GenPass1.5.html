@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GenPass 1.5 — Расширенный Анализатор</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --primary-color: #8b5cf6;
+            --secondary-color: #6366f1;
+            --text-color: #f8fafc;
+            --border-color: #334155;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --info-color: #3b82f6;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .container {
+            background: var(--card-bg);
+            padding: 2.5rem;
+            border-radius: 1.5rem;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+            width: 100%;
+            max-width: 500px;
+            position: relative;
+        }
+
+
+        .info-wrapper {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+        }
+        .info-btn {
+            background: var(--border-color);
+            color: var(--text-color);
+            border: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .info-tooltip {
+            visibility: hidden;
+            width: 250px;
+            background-color: #334155;
+            color: #fff;
+            border-radius: 8px;
+            padding: 12px;
+            position: absolute;
+            z-index: 10;
+            top: 35px;
+            right: 0;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 0.85rem;
+            border: 1px solid var(--primary-color);
+        }
+        .info-wrapper:hover .info-tooltip { visibility: visible; opacity: 1; }
+
+        h1 {
+            text-align: center;
+            color: var(--primary-color);
+            margin-top: 0;
+            margin-bottom: 1.5rem;
+            font-family: 'Roboto Mono', monospace;
+        }
+
+        .input-group {
+            position: relative;
+            margin-bottom: 1rem;
+        }
+
+        #password-input {
+            width: 100%;
+            background: var(--bg-color);
+            border: 2px solid var(--border-color);
+            color: var(--text-color);
+            padding: 1rem;
+            padding-right: 4.5rem;
+            border-radius: 0.75rem;
+            font-size: 1.2rem;
+            font-family: 'Roboto Mono', monospace;
+            box-sizing: border-box;
+            outline: none;
+        }
+
+        .btn-action {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: var(--border-color);
+            border: none;
+            color: var(--text-color);
+            cursor: pointer;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 0.8rem;
+        }
+
+        .strength-bar {
+            height: 8px;
+            width: 100%;
+            background: var(--border-color);
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+
+        #strength-fill {
+            height: 100%;
+            width: 0%;
+            transition: all 0.4s ease;
+        }
+
+        .settings-section {
+            display: grid;
+            gap: 12px;
+            margin: 1.5rem 0;
+        }
+
+        .setting-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .btn-generate {
+            width: 100%;
+            background: var(--secondary-color);
+            color: white;
+            border: none;
+            padding: 1rem;
+            border-radius: 0.75rem;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            margin-bottom: 10px;
+        }
+
+        .btn-survey {
+            width: 100%;
+            background: transparent;
+            color: var(--primary-color);
+            border: 2px solid var(--primary-color);
+            padding: 0.8rem;
+            border-radius: 0.75rem;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            display: block;
+            text-align: center;
+            box-sizing: border-box;
+            margin-bottom: 20px;
+            transition: all 0.2s;
+        }
+        .btn-survey:hover { background: var(--primary-color); color: white; }
+
+        .pattern-badge {
+            display: inline-block;
+            background: var(--danger-color);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            margin-top: 5px;
+        }
+
+        .check-info {
+            border-top: 1px dashed var(--border-color);
+            padding-top: 1rem;
+            margin-top: 1rem;
+        }
+
+        .footer-contacts {
+            margin-top: 2rem;
+            text-align: center;
+            font-size: 0.8rem;
+            color: #94a3b8;
+        }
+        .footer-contacts a { color: var(--secondary-color); text-decoration: none; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="info-wrapper">
+            <button class="info-btn">i</button>
+            <div class="info-tooltip">
+                GenPass — это инструмент создания надёжных ключей данных. Он помогает защитить ваши аккаунты от взлома методом перебора и анализа паттернов.
+            </div>
+        </div>
+
+        <h1>GenPass</h1>
+
+        <div class="input-group">
+            <input type="text" id="password-input" placeholder="Введите пароль">
+            <button class="btn-action" onclick="copyPassword()">Copy</button>
+        </div>
+
+        <div class="strength-wrapper">
+            <div class="strength-bar"><div id="strength-fill"></div></div>
+            <p id="strength-text" style="font-weight:600; margin: 5px 0;">Сложность: —</p>
+            <p id="crack-time" style="font-size: 0.8rem; color: #94a3b8; margin: 0;">Подбор: —</p>
+            <div id="pattern-results"></div>
+        </div>
+
+        <div class="settings-section">
+            <div class="setting-item">
+                <label>Длина: <span id="length-val">12</span></label>
+                <input type="range" id="char-length" value="12" min="4" max="64" oninput="document.getElementById('length-val').innerText = this.value">
+            </div>
+            <div class="setting-item"><label>Строчные (a-z)</label><input type="checkbox" id="use-lowercase" checked></div>
+            <div class="setting-item"><label>Заглавные (A-Z)</label><input type="checkbox" id="use-uppercase" checked></div>
+            <div class="setting-item"><label>Цифры (0-9)</label><input type="checkbox" id="use-numbers" checked></div>
+            <div class="setting-item"><label>Символы (!@#$)</label><input type="checkbox" id="use-symbols" checked></div>
+            <div class="setting-item"><label>Unicode (∑∞╔)</label><input type="checkbox" id="use-unicode"></div>
+        </div>
+
+        <button class="btn-generate" onclick="generatePassword()">Сгенерировать</button>
+        
+        <a href="https://docs.google.com/forms/d/e/1FAIpQLSchVvVAhHehp2FDfqJWyj8BeIn3kQ3BcTneR3BA6TOGSjNIMQ/viewform?usp=publish-editor" 
+           target="_blank" class="btn-survey">
+            Пройти опрос по кибербезопасности
+        </a>
+
+        <div class="check-info">
+            <p id="checker-level" style="font-weight: 700; margin-bottom: 0.5rem;"></p>
+            <p style="font-size: 0.9rem; margin-bottom: 0.5rem;">Рекомендации:</p>
+            <ul id="checker-suggestions" style="font-size: 0.85rem; padding-left: 20px; color: #3b82f6;"></ul>
+        </div>
+    </div>
+
+    <footer class="footer-contacts">
+        <p>Создатель: Толкачева П.Д.</p>
+        <p>Ссылка на репозиторий: <a href="https://github.com/KatPack-11047/GenPass" target="_blank">GitHub</a></p>
+    </footer>
+
+    <script>
+        const passwordInput = document.getElementById('password-input');
+        const strengthFill = document.getElementById('strength-fill');
+        const strengthText = document.getElementById('strength-text');
+        const patternBox = document.getElementById('pattern-results');
+        const checkerLevel = document.getElementById('checker-level');
+        const checkerSuggestions = document.getElementById('checker-suggestions');
+
+        // База паттернов
+        const DICTIONARY = ['123456', 'password', 'qwerty', 'admin', '12345', 'love', 'google', 'letmein', 'russia'];
+        const SEQUENCES = ['abcdefghijklmnopqrstuvwxyz', '01234567890', 'qwertyuiopasdfghjklzxcvbnm'];
+
+        // Исправленный алгоритм Шеннона
+        function calculateShannonEntropy(str) {
+            if (!str) return 0;
+            const frequencies = {};
+            for (let char of str) frequencies[char] = (frequencies[char] || 0) + 1;
+            
+            let entropyPerChar = 0;
+            const len = str.length;
+            for (let char in frequencies) {
+                let p = frequencies[char] / len;
+                entropyPerChar -= p * Math.log2(p);
+            }
+            return entropyPerChar * len; 
+        }
+
+        function checkPatterns(pass) {
+            let found = [];
+            let lowerPass = pass.toLowerCase();
+            
+            if (DICTIONARY.some(word => lowerPass.includes(word))) found.push("Словарное слово");
+            if (/(.)\1{2,}/.test(pass)) found.push("Повторы символов");
+            
+            for (let seq of SEQUENCES) {
+                for (let i = 0; i <= seq.length - 4; i++) {
+                    if (lowerPass.includes(seq.substring(i, i + 4))) {
+                        found.push("Клавиатурная серия");
+                        break;
+                    }
+                }
+            }
+            return [...new Set(found)];
+        }
+
+        function evaluatePassword(password) {
+            if (!password) {
+                strengthFill.style.width = "0%";
+                strengthText.innerText = "Сложность: —";
+                patternBox.innerHTML = "";
+                checkerLevel.innerText = "";
+                checkerSuggestions.innerHTML = "";
+                return;
+            }
+
+            const entropy = calculateShannonEntropy(password);
+            const patterns = checkPatterns(password);
+            
+            // Анализ для рекомендаций (как в 1.3)
+            let suggestions = [];
+            if (!/[a-z]/.test(password)) suggestions.push('Добавьте строчные буквы');
+            if (!/[A-Z]/.test(password)) suggestions.push('Добавьте заглавные буквы');
+            if (!/[0-9]/.test(password)) suggestions.push('Добавьте цифры');
+            if (!/[^A-Za-z0-9]/.test(password)) suggestions.push('Добавьте спецсимволы');
+
+            // Штраф за паттерны (снижаем энтропию визуально, если найдены дыры)
+            let displayScore = entropy;
+            if (patterns.length > 0) displayScore *= 0.5; 
+
+            let level = "Слабый", color = "var(--danger-color)", width = "30%";
+            if (displayScore > 50) { level = "Надежный"; color = "var(--success-color)"; width = "100%"; }
+            else if (displayScore > 30) { level = "Средний"; color = "var(--info-color)"; width = "65%"; }
+
+            strengthFill.style.width = width;
+            strengthFill.style.backgroundColor = color;
+            strengthText.innerText = `Сложность: ${level} (${Math.round(entropy)} бит)`;
+            strengthText.style.color = color;
+            
+            checkerLevel.innerText = `Статус: ${level}`;
+            checkerLevel.style.color = color;
+            checkerSuggestions.innerHTML = suggestions.length 
+                ? suggestions.map(s => `<li>${s}</li>`).join('') 
+                : "<li>Пароль соответствует правилам!</li>";
+
+            patternBox.innerHTML = patterns.map(p => `<span class="pattern-badge">⚠ ${p}</span>`).join(' ');
+            
+            // Время подбора
+            const sec = Math.pow(2, entropy) / 1e9;
+            let timeStr = sec < 1 ? "< 1 сек." : Math.round(sec) + " сек.";
+            if (sec > 31536000) timeStr = "более года";
+            document.getElementById('crack-time').innerText = `Время подбора: ~${timeStr}`;
+        }
+
+        function generatePassword() {
+            const length = +document.getElementById('char-length').value;
+            const sets = {
+                l: 'abcdefghijklmnopqrstuvwxyz',
+                u: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
+                n: '0123456789',
+                s: '!@#$%^&*()_+',
+                uni: '∑∞⚡☯★♥♦♣♠'
+            };
+            let charset = "";
+            if(document.getElementById('use-lowercase').checked) charset += sets.l;
+            if(document.getElementById('use-uppercase').checked) charset += sets.u;
+            if(document.getElementById('use-numbers').checked) charset += sets.n;
+            if(document.getElementById('use-symbols').checked) charset += sets.s;
+            if(document.getElementById('use-unicode').checked) charset += sets.uni;
+
+            if(!charset) return alert("Выберите хотя бы один набор символов");
+
+            let pass = "";
+            for (let i = 0; i < length; i++) {
+                pass += charset.charAt(Math.floor(Math.random() * charset.length));
+            }
+            passwordInput.value = pass;
+            evaluatePassword(pass);
+        }
+
+        function copyPassword() {
+            navigator.clipboard.writeText(passwordInput.value);
+            alert("Скопировано!");
+        }
+
+        passwordInput.addEventListener('input', (e) => evaluatePassword(e.target.value));
+        window.onload = generatePassword;
+    </script>
+</body>
+</html>
